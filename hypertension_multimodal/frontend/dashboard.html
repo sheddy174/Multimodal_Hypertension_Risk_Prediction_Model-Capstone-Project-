@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Overview - HyperRNet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/dashboard.js" defer></script>
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">HyperRNet</h2>
+        
+        <nav>
+            <div class="nav-section">
+                <span class="nav-section-title">MAIN</span>
+                <a href="dashboard.html" class="active">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                </a>
+                <a href="predict.html">
+                    <span class="nav-icon">🔬</span>
+                    <span>New Prediction</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <span class="nav-section-title">DATA</span>
+                <a href="history.html">
+                    <span class="nav-icon">📋</span>
+                    <span>Patient History</span>
+                </a>
+                <a href="analytics.html">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <span class="nav-section-title">SYSTEM</span>
+                <a href="index.html">
+                    <span class="nav-icon">🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="about.html">
+                    <span class="nav-icon">ℹ️</span>
+                    <span>About</span>
+                </a>
+                <a href="contact.html">
+                    <span class="nav-icon">✉️</span>
+                    <span>Contact</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <div class="user-name">Medical Staff</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="dashboard-header">
+            <div>
+                <h1>Dashboard Overview</h1>
+                <p>Real-time hypertension risk assessment statistics</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary">Export Report</button>
+                <button class="btn-primary" onclick="window.location.href='predict.html'">New Prediction</button>
+            </div>
+        </header>
+
+        <!-- Quick Stats Cards -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-1">
+                    <span>📊</span>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Predictions</h3>
+                    <p class="stat-number">1,247</p>
+                    <span class="stat-change positive">+12% this month</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-2">
+                    <span>⚠️</span>
+                </div>
+                <div class="stat-content">
+                    <h3>High Risk Cases</h3>
+                    <p class="stat-number">156</p>
+                    <span class="stat-change negative">+3% this week</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-3">
+                    <span>✅</span>
+                </div>
+                <div class="stat-content">
+                    <h3>Low Risk Cases</h3>
+                    <p class="stat-number">891</p>
+                    <span class="stat-change positive">71.4% of total</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-4">
+                    <span>📈</span>
+                </div>
+                <div class="stat-content">
+                    <h3>Model Accuracy</h3>
+                    <p class="stat-number">94.2%</p>
+                    <span class="stat-change positive">+0.5% improvement</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-card large">
+                <div class="card-header">
+                    <h2>Risk Distribution Over Time</h2>
+                    <select class="chart-filter" aria-label="Filter risk distribution by time period">
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 3 Months</option>
+                        <option>Last Year</option>
+                    </select>
+                </div>
+                <div class="chart-placeholder">
+                    <div class="chart-visual">
+                        <div class="bar-chart">
+                            <div class="bar bar-low" data-height="60%">
+                                <span class="bar-label">Low</span>
+                                <span class="bar-value">891</span>
+                            </div>
+                            <div class="bar bar-medium" data-height="35%">
+                                <span class="bar-label">Medium</span>
+                                <span class="bar-value">200</span>
+                            </div>
+                            <div class="bar bar-high" data-height="25%">
+                                <span class="bar-label">High</span>
+                                <span class="bar-value">156</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="card-header">
+                    <h2>Model Performance</h2>
+                </div>
+                <div class="performance-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Clinical Model</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill metric-fill-1" data-width="92%"></div>
+                        </div>
+                        <span class="metric-value">92%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Retinal Model</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill metric-fill-2" data-width="89%"></div>
+                        </div>
+                        <span class="metric-value">89%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Late Fusion</span>
+                        <div class="metric-bar">
+                            <div class="metric-fill metric-fill-3" data-width="94.2%"></div>
+                        </div>
+                        <span class="metric-value">94.2%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Predictions Table -->
+        <section class="recent-predictions">
+            <div class="card-header">
+                <h2>Recent Predictions</h2>
+                <a href="history.html" class="view-all">View All →</a>
+            </div>
+            <div class="table-container">
+                <table class="predictions-table">
+                    <thead>
+                        <tr>
+                            <th>Patient ID</th>
+                            <th>Date</th>
+                            <th>Clinical Score</th>
+                            <th>Retinal Score</th>
+                            <th>Fusion Score</th>
+                            <th>Risk Level</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#P2601</td>
+                            <td>Mar 01, 2026</td>
+                            <td>0.82</td>
+                            <td>0.76</td>
+                            <td>0.85</td>
+                            <td><span class="badge high-risk">High Risk</span></td>
+                            <td><button class="btn-table">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#P2600</td>
+                            <td>Mar 01, 2026</td>
+                            <td>0.34</td>
+                            <td>0.41</td>
+                            <td>0.38</td>
+                            <td><span class="badge low-risk">Low Risk</span></td>
+                            <td><button class="btn-table">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#P2599</td>
+                            <td>Feb 28, 2026</td>
+                            <td>0.58</td>
+                            <td>0.62</td>
+                            <td>0.61</td>
+                            <td><span class="badge medium-risk">Medium Risk</span></td>
+                            <td><button class="btn-table">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#P2598</td>
+                            <td>Feb 28, 2026</td>
+                            <td>0.21</td>
+                            <td>0.19</td>
+                            <td>0.23</td>
+                            <td><span class="badge low-risk">Low Risk</span></td>
+                            <td><button class="btn-table">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#P2597</td>
+                            <td>Feb 28, 2026</td>
+                            <td>0.74</td>
+                            <td>0.79</td>
+                            <td>0.78</td>
+                            <td><span class="badge high-risk">High Risk</span></td>
+                            <td><button class="btn-table">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
