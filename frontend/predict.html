@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Dashboard - HyperRNet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/predict.css">
+    <script src="js/predict.js" defer></script>
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">HyperRNet</h2>
+        
+        <nav>
+            <div class="nav-section">
+                <span class="nav-section-title">MAIN</span>
+                <a href="dashboard.html">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                </a>
+                <a href="predict.html" class="active">
+                    <span class="nav-icon">🔬</span>
+                    <span>New Prediction</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <span class="nav-section-title">SYSTEM</span>
+                <a href="index.html">
+                    <span class="nav-icon">🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="about.html">
+                    <span class="nav-icon">ℹ️</span>
+                    <span>About</span>
+                </a>
+                <a href="contact.html">
+                    <span class="nav-icon">✉️</span>
+                    <span>Contact</span>
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">👤</div>
+                <div class="user-info">
+                    <div class="user-name">Medical Staff</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="dashboard-header">
+            <h1>Hypertension Risk Prediction Dashboard</h1>
+            <p>Multimodal AI-based screening system</p>
+        </header>
+
+        <!-- How It Works -->
+        <section class="info-card">
+            <h2>How It Works</h2>
+            <ol>
+                <li>Enter patient clinical information.</li>
+                <li>Upload a retinal fundus image.</li>
+                <li>Click "Predict Risk".</li>
+                <li>View the clinical, retinal, and fused risk scores.</li>
+            </ol>
+        </section>
+
+        <!-- Prediction Section -->
+        <section class="prediction-section">
+
+            <!-- Clinical Form -->
+            <div class="card">
+                <h2>Clinical Data</h2>
+
+                <form id="clinical-form">
+                    <!-- Demographics -->
+                    <input type="number" placeholder="Age" required id="age-input">
+                    
+                    <label for="sex">Sex</label>
+                    <select id="sex" required>
+                        <option value="">Select Sex</option>
+                        <option value="0">Female (0)</option>
+                        <option value="1">Male (1)</option>
+                    </select>
+
+                    <!-- Physical Measurements -->
+                    <input type="number" step="0.1" placeholder="BMI" required id="bmi-input">
+                    <input type="number" placeholder="Systolic BP (mmHg)" required id="systolic-input">
+                    <input type="number" placeholder="Diastolic BP (mmHg)" required id="diastolic-input">
+                    
+                    <!-- Lab Values -->
+                    <input type="number" step="0.1" placeholder="Glucose Level (mg/dL)" required id="glucose-input">
+                    <input type="number" step="0.1" placeholder="Total Cholesterol (mg/dL)" id="cholesterol-input" 
+                           title="Optional - leave blank for average (200)">
+                    <input type="number" placeholder="Heart Rate (bpm)" id="heart-rate-input"
+                           title="Optional - leave blank for average (75)">
+
+                    <!-- Risk Factors -->
+                    <label for="smoking-status">Current Smoker</label>
+                    <select id="smoking-status" required>
+                        <option value="">Select Smoking Status</option>
+                        <option value="1">Yes (1)</option>
+                        <option value="0">No (0)</option>
+                    </select>
+
+                    <label for="diabetes">Diabetes</label>
+                    <select id="diabetes" required>
+                        <option value="">Select Diabetes Status</option>
+                        <option value="1">Yes (1)</option>
+                        <option value="0">No (0)</option>
+                    </select>
+                    
+                    <label for="bp-meds">Taking BP Medications</label>
+                    <select id="bp-meds" required>
+                        <option value="">Select BP Medication Status</option>
+                        <option value="1">Yes (1)</option>
+                        <option value="0">No (0)</option>
+                    </select>
+                </form>
+            </div>
+
+            <!-- Retinal Upload -->
+            <div class="card">
+                <h2>Retinal Fundus Image</h2>
+                <label for="retinal-image">Upload fundus image:</label>
+                <input id="retinal-image" type="file" accept="image/*" required>
+                <div class="image-preview">
+                    <p>Image preview will appear here</p>
+                </div>
+            </div>
+
+        </section>
+
+        <div class="predict-button-container">
+            <button class="predict-btn">Predict Risk</button>
+        </div>
+
+        <!-- Results Section -->
+        <section class="results-card">
+            <h2>Prediction Results</h2>
+            <p>Clinical Model Probability: --</p>
+            <p>Retinal Model Probability: --</p>
+            <p>Late Fusion Probability: --</p>
+            <h3>Risk Category: --</h3>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
