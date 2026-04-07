@@ -13,7 +13,7 @@ const CONFIG = {
 
         // Production (Render backend)
         // TODO: Replace with your actual Render backend URL after deployment
-        return 'https://hypertension-multimodal-api.onrender.com';
+        return 'https://hyperrnet.onrender.com';
     })(),
 
     // Other config settings
