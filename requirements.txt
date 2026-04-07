@@ -10,3 +10,4 @@ numpy
 uvicorn
 joblib
 python-multipart
+requests
