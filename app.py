@@ -10,6 +10,7 @@ from PIL import Image
 import io
 import traceback
 import os
+import time
 
 from services.clinical_predict import clinical_predict
 from services.retinal_predict import retinal_predict
@@ -181,6 +182,8 @@ async def predict(
     Frontend provides 5, we use sensible defaults for the remaining 7.
     """
     
+    request_start = time.time()
+    
     print("\n" + "="*60)
     print("NEW PREDICTION REQUEST")
     print("="*60)
@@ -204,15 +207,18 @@ async def predict(
     try:
         # Step 1: Read and process image
         print("\n[STEP 1/4] 📷 Reading fundus image...")
+        step1_start = time.time()
         contents = await fundus_image.read()
         print(f"  ✓ Image size: {len(contents):,} bytes")
         
         image = Image.open(io.BytesIO(contents))
         print(f"  ✓ Image loaded: {image.format}, {image.size}, {image.mode}")
+        step1_time = time.time() - step1_start
 
         # Step 2: Clinical prediction using Framingham model + pipeline
         print("\n[STEP 2/4] 🔬 Running clinical prediction...")
         print("  Using Framingham preprocessing pipeline...")
+        step2_start = time.time()
         
         clinical_data = {
             "age": age,
@@ -231,21 +237,34 @@ async def predict(
         
         clinical_prob = clinical_predict(clinical_data)
         print(f"  ✓ Clinical probability: {clinical_prob:.4f}")
+        step2_time = time.time() - step2_start
 
         # Step 3: Retinal prediction using ResNet-50
         print("\n[STEP 3/4] 👁️ Running retinal prediction...")
+        step3_start = time.time()
         retinal_prob = retinal_predict(image)
         print(f"  ✓ Retinal probability: {retinal_prob:.4f}")
+        step3_time = time.time() - step3_start
 
         # Step 4: Fusion of both models
         print("\n[STEP 4/4] 🔗 Running late fusion...")
+        step4_start = time.time()
         fused_prob, risk = fusion_predict(clinical_prob, retinal_prob)
         print(f"  ✓ Fused probability: {fused_prob:.4f}")
         print(f"  ✓ Risk level: {risk}")
+        step4_time = time.time() - step4_start
+        
+        total_time = time.time() - request_start
         
         print("\n" + "="*60)
         print("✅ PREDICTION SUCCESSFUL")
         print("="*60)
+        print(f"⏱️  TIMINGS:")
+        print(f"  Step 1 (Image):      {step1_time:.3f}s")
+        print(f"  Step 2 (Clinical):   {step2_time:.3f}s")
+        print(f"  Step 3 (Retinal):    {step3_time:.3f}s ⚠️ USUALLY SLOWEST")
+        print(f"  Step 4 (Fusion):     {step4_time:.3f}s")
+        print(f"  Total Request Time:  {total_time:.3f}s")
         print(f"Clinical: {clinical_prob:.4f} | Retinal: {retinal_prob:.4f} | Fused: {fused_prob:.4f}")
         print(f"Risk: {risk}")
         print("="*60 + "\n")
