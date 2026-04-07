@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .env
-models/best_fundus_htr_model.pth
-*.pth
+# Temporarily allow model files for deployment
+# models/best_fundus_htr_model.pth
+# *.pth
 *.pyd
