@@ -255,7 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
             clinical_probability: data.clinical_probability,
             retinal_probability: data.retinal_probability,
             fusion_probability: data.fused_probability,
-            risk_category: data.risk_level
+            risk_category: data.risk_level,
+            clinical_data: clinicalData
         };
     }
     
@@ -275,12 +276,23 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3 class="risk-category ${getRiskClass(result.risk_category)}" style="animation: fadeIn 0.5s ease-out 0.4s backwards;">
                 Risk Category: ${result.risk_category}
             </h3>
+            <button id="view-breakdown-btn" class="secondary-btn">View Breakdown</button>
         `;
         
         resultsCard.innerHTML = resultsHTML;
         
+        // Save breakdown data in session storage for the breakdown page
+        sessionStorage.setItem('hypertensionRiskBreakdown', JSON.stringify(result));
+
         // Add visual feedback
         resultsCard.style.border = `2px solid ${getRiskColor(result.risk_category)}`;
+
+        const breakdownButton = document.getElementById('view-breakdown-btn');
+        if (breakdownButton) {
+            breakdownButton.addEventListener('click', () => {
+                window.location.href = 'risk-breakdown.html';
+            });
+        }
     }
     
     // Get risk category class

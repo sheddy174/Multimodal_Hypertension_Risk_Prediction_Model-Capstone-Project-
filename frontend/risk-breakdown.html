@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Risk Breakdown - HyperRNet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/breakdown.css">
+    <script src="js/config.js"></script>
+    <script src="js/breakdown.js" defer></script>
+</head>
+<body>
+
+<div class="breakdown-page">
+    <header class="breakdown-header">
+        <a href="predict.html" class="back-link">← Back to Prediction</a>
+        <div class="breakdown-title">
+            <h1>Risk Breakdown</h1>
+            <p>Understand the factors contributing to your hypertension risk score.</p>
+        </div>
+    </header>
+
+    <section class="summary-panel" id="summary-panel">
+        <div class="summary-card">
+            <h2>Latest Prediction Summary</h2>
+            <div id="summary-content" class="summary-content">
+                <p>Loading your risk breakdown...</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="contributions-panel">
+        <div class="section-header">
+            <h2>Feature Contributions</h2>
+            <p>Top contributors to the current risk prediction, ranked by impact.</p>
+        </div>
+        <div id="contribution-list" class="contribution-list"></div>
+    </section>
+
+    <section class="notes-panel">
+        <h2>How This Works</h2>
+        <p>This breakdown provides a simplified interpretation of the main clinical and retinal drivers that increase your hypertension risk.</p>
+        <ul>
+            <li><strong>Age, BMI, blood pressure, and glucose</strong> are strong clinical risk indicators.</li>
+            <li><strong>Smoking and diabetes</strong> add to long-term cardiovascular risk.</li>
+            <li>The retinal model probability highlights <strong>eye image changes</strong> linked with hypertension.</li>
+        </ul>
+    </section>
+</div>
+
+</body>
+</html>
