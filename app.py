@@ -152,7 +152,41 @@ def home():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "Hypertension Multimodal AI API"}
+    """
+    Health check endpoint that verifies model files exist and basic dependencies are loaded
+    """
+    try:
+        # Check clinical model files
+        clinical_model_exists = os.path.exists("models/best_hypertension_model.pkl")
+        pipeline_exists = os.path.exists("models/framingham_preprocessing_pipeline.pkl")
+        
+        # Check retinal model file
+        retinal_model_exists = os.path.exists("models/best_fundus_htr_model.pth")
+        
+        # Check fusion model
+        fusion_model_exists = os.path.exists("models/late_fusion_model.pkl")
+        
+        all_models_ready = clinical_model_exists and pipeline_exists and retinal_model_exists and fusion_model_exists
+        
+        return {
+            "status": "healthy" if all_models_ready else "warning",
+            "service": "Hypertension Multimodal AI API",
+            "models": {
+                "clinical": "ready" if clinical_model_exists else "missing",
+                "pipeline": "ready" if pipeline_exists else "missing",
+                "retinal": "ready" if retinal_model_exists else "will_download",
+                "fusion": "ready" if fusion_model_exists else "missing"
+            },
+            "device": "cuda" if torch.cuda.is_available() else "cpu",
+            "message": "All models ready" if all_models_ready else "Some models missing - will be downloaded on first use"
+        }
+    
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "service": "Hypertension Multimodal AI API"
+        }
 
 @app.post("/predict")
 async def predict(
