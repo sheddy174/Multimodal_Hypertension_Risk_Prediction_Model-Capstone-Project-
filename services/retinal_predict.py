@@ -35,8 +35,6 @@ def load_retinal_model():
     if model_load_attempted:
         raise RuntimeError("Retinal model loading previously failed")
     
-    model_load_attempted = True
-    
     print("⏳ Loading retinal model (first inference)...")
     load_start = time.time()
     
@@ -57,12 +55,14 @@ def load_retinal_model():
             torch.cuda.set_float32_matmul_precision('high')
         
         load_time = time.time() - load_start
+        model_load_attempted = True
         print(f"✅ Retinal model loaded successfully ({load_time:.2f}s)")
         
         return model
     
     except Exception as e:
         print(f"❌ Failed to load retinal model: {e}")
+        model_load_attempted = False
         raise
 
 transform = transforms.Compose([
