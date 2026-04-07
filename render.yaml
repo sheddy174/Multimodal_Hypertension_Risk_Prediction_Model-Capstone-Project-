@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: hypertension-multimodal-api
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    buildCommand: docker build -t hypertension-api .
+    startCommand: docker run -p $PORT:10000 hypertension-api

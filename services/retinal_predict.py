@@ -1,13 +1,20 @@
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
+import os
 
 from model_architectures.fundus_model import FundusHypertensionModel
 
-model = FundusHypertensionModel()
-checkpoint = torch.load("models/best_fundus_htr_model.pth", map_location="cpu", weights_only=False)
-model.load_state_dict(checkpoint["model_state_dict"])
-model.eval()
+# Check if model file exists
+model_path = "models/best_fundus_htr_model.pth"
+if not os.path.exists(model_path):
+    print(f"Warning: Model file {model_path} not found. Retinal prediction will not work.")
+    model = None
+else:
+    model = FundusHypertensionModel()
+    checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    model.eval()
 
 transform = transforms.Compose([
     transforms.Resize((224,224)),
@@ -15,6 +22,8 @@ transform = transforms.Compose([
 ])
 
 def retinal_predict(image: Image):
+    if model is None:
+        raise FileNotFoundError(f"Model file {model_path} not found. Please ensure the model file is uploaded to the deployment environment.")
 
     img = transform(image).unsqueeze(0)
 

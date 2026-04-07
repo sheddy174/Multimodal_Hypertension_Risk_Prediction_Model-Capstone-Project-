@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             BPMeds: clinicalData.bpMeds || 'using default'
         });
         
-        const response = await fetch("http://127.0.0.1:8000/predict", {
+        const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/predict`, {
             method: "POST",
             body: formData
         });

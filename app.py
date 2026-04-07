@@ -8,6 +8,7 @@ import torch
 from PIL import Image
 import io
 import traceback
+import os
 
 from services.clinical_predict import clinical_predict
 from services.retinal_predict import retinal_predict
@@ -27,7 +28,11 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"message": "Hypertension AI API running"}
+    return {"message": "Hypertension AI API running", "status": "healthy"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "Hypertension Multimodal AI API"}
 
 @app.post("/predict")
 async def predict(
@@ -156,6 +161,8 @@ async def predict(
                 "risk_level": "Error"
             }
         )
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run("app:app", host="0.0.0.0", port=8000)
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
