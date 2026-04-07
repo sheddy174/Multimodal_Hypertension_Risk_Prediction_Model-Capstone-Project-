@@ -503,6 +503,29 @@ body {
     transform: translateY(-1px);
 }
 
+.secondary-btn {
+    margin-top: 24px;
+    padding: 14px 28px;
+    background: #ffffff;
+    color: var(--color-primary);
+    border: 1px solid rgba(8, 131, 149, 0.2);
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: 0 8px 20px rgba(8, 131, 149, 0.08);
+}
+
+.secondary-btn:hover {
+    transform: translateY(-1px);
+    background: #f0fcff;
+}
+
+.secondary-btn:active {
+    transform: translateY(0);
+}
+
 /* Results Card */
 .results-card {
     background: var(--color-white);

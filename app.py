@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 import numpy as np
 import pandas as pd
 import joblib
@@ -15,6 +16,129 @@ from services.retinal_predict import retinal_predict
 from services.fusion_predict import fusion_predict
 
 app = FastAPI(title="Hypertension Multimodal AI API")
+
+class ClinicalData(BaseModel):
+    age: float = Field(50.0)
+    sex: int = Field(0)
+    bmi: float = Field(25.0)
+    systolic_bp: float = Field(120.0)
+    diastolic_bp: float = Field(80.0)
+    glucose: float = Field(100.0)
+    totChol: float = Field(200.0)
+    heartRate: int = Field(75)
+    currentSmoker: int = Field(0)
+    cigsPerDay: int = Field(0)
+    diabetes: int = Field(0)
+    BPMeds: int = Field(0)
+
+class BreakdownRequest(BaseModel):
+    clinical_data: ClinicalData
+    clinical_probability: float
+    retinal_probability: float
+    fusion_probability: float
+    risk_level: str
+
+
+def clamp_value(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
+    return max(min(value, maximum), minimum)
+
+
+def normalize_value(value: float, baseline: float, span: float) -> float:
+    return clamp_value((value - baseline) / span)
+
+
+def build_risk_breakdown(clinical_data: ClinicalData, retinal_probability: float, fusion_probability: float):
+    return [
+        {
+            "title": "Systolic Blood Pressure",
+            "score": normalize_value(clinical_data.systolic_bp, 110, 80),
+            "detail": f"Higher systolic pressure is a strong hypertension driver. Current reading: {clinical_data.systolic_bp} mmHg."
+        },
+        {
+            "title": "Diastolic Blood Pressure",
+            "score": normalize_value(clinical_data.diastolic_bp, 70, 80),
+            "detail": f"Diastolic pressure influences long-term vascular risk. Current reading: {clinical_data.diastolic_bp} mmHg."
+        },
+        {
+            "title": "Age",
+            "score": normalize_value(clinical_data.age, 35, 45),
+            "detail": f"Hypertension risk generally increases with age. Current age: {clinical_data.age}."
+        },
+        {
+            "title": "BMI",
+            "score": normalize_value(clinical_data.bmi, 22, 18),
+            "detail": f"Higher BMI is associated with greater cardiovascular strain. Current BMI: {clinical_data.bmi}."
+        },
+        {
+            "title": "Glucose",
+            "score": normalize_value(clinical_data.glucose, 90, 120),
+            "detail": f"Elevated glucose can contribute to metabolic risk. Current level: {clinical_data.glucose} mg/dL."
+        },
+        {
+            "title": "Cholesterol",
+            "score": normalize_value(clinical_data.totChol, 180, 120),
+            "detail": f"High cholesterol can worsen vascular health. Current level: {clinical_data.totChol} mg/dL."
+        },
+        {
+            "title": "Smoking Status",
+            "score": 1.0 if clinical_data.currentSmoker == 1 else 0.05,
+            "detail": "Smoking increases cardiovascular strain." if clinical_data.currentSmoker == 1 else "Non-smoker status lowers risk."
+        },
+        {
+            "title": "Diabetes",
+            "score": 1.0 if clinical_data.diabetes == 1 else 0.05,
+            "detail": "Diabetes raises hypertension risk." if clinical_data.diabetes == 1 else "No diabetes lowers risk."
+        },
+        {
+            "title": "Blood Pressure Medication",
+            "score": 0.95 if clinical_data.BPMeds == 1 else 0.25,
+            "detail": "Medication indicates existing hypertension treatment." if clinical_data.BPMeds == 1 else "No BP medications suggests lower treatment dependency."
+        },
+        {
+            "title": "Heart Rate",
+            "score": normalize_value(clinical_data.heartRate, 60, 60),
+            "detail": f"Higher resting heart rate is often linked with elevated risk. Current rate: {clinical_data.heartRate} bpm."
+        },
+        {
+            "title": "Retinal Model Contribution",
+            "score": clamp_value(retinal_probability),
+            "detail": "The fundus image model indicates how strongly retinal changes support hypertension risk."
+        },
+        {
+            "title": "Fusion Impact",
+            "score": clamp_value(fusion_probability),
+            "detail": "The final prediction combines both clinical and retinal evidence."
+        }
+    ]
+
+
+@app.post("/breakdown")
+def breakdown(payload: BreakdownRequest):
+    try:
+        contributions = build_risk_breakdown(
+            payload.clinical_data,
+            payload.retinal_probability,
+            payload.fusion_probability
+        )
+
+        summary = {
+            "risk_category": payload.risk_level,
+            "clinical_probability": float(payload.clinical_probability),
+            "retinal_probability": float(payload.retinal_probability),
+            "fusion_probability": float(payload.fusion_probability)
+        }
+
+        return {"summary": summary, "contributions": contributions}
+
+    except Exception as e:
+        print("Error generating breakdown:", e)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": str(e),
+                "error_type": type(e).__name__,
+            }
+        )
 
 # CORS Configuration
 # TODO: Before production, change allow_origins to your specific frontend URL
