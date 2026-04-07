@@ -5,46 +5,153 @@
     <title>Risk Breakdown - HyperRNet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/breakdown.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/breakdown.js" defer></script>
 </head>
+
 <body>
 
-<div class="breakdown-page">
+<div class="breakdown-container">
+
+    <!-- Header -->
     <header class="breakdown-header">
-        <a href="predict.html" class="back-link">← Back to Prediction</a>
-        <div class="breakdown-title">
-            <h1>Risk Breakdown</h1>
-            <p>Understand the factors contributing to your hypertension risk score.</p>
+        <div class="header-content">
+            <h1>Your Hypertension Risk Analysis</h1>
+            <p>Personalized breakdown and recommendations</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-secondary" onclick="window.location='predict.html'">
+                ← Back to Predict
+            </button>
+            <button class="btn-primary" id="export-pdf">
+                📄 Export PDF
+            </button>
         </div>
     </header>
 
-    <section class="summary-panel" id="summary-panel">
-        <div class="summary-card">
-            <h2>Latest Prediction Summary</h2>
-            <div id="summary-content" class="summary-content">
-                <p>Loading your risk breakdown...</p>
+    <!-- Loading State -->
+    <div class="loading-container" id="loading">
+        <div class="spinner-large"></div>
+        <p>Analyzing your risk factors...</p>
+    </div>
+
+    <!-- Main Content -->
+    <main class="breakdown-content" id="content" style="display: none;">
+
+        <!-- Overall Risk Score -->
+        <section class="risk-overview">
+            <div class="risk-gauge">
+                <canvas id="risk-gauge-chart"></canvas>
             </div>
-        </div>
-    </section>
+            <div class="risk-summary">
+                <h2 id="risk-category">Medium Risk</h2>
+                <p class="risk-percentage" id="risk-percentage">--</p>
+                <p class="risk-description">Your overall hypertension risk based on clinical and retinal analysis</p>
+            </div>
+        </section>
 
-    <section class="contributions-panel">
-        <div class="section-header">
-            <h2>Feature Contributions</h2>
-            <p>Top contributors to the current risk prediction, ranked by impact.</p>
-        </div>
-        <div id="contribution-list" class="contribution-list"></div>
-    </section>
+        <!-- Factor Contributions -->
+        <section class="section-card">
+            <h2>Risk Factor Contributions</h2>
+            <p class="section-description">Understanding what's driving your risk</p>
+            
+            <div class="chart-container">
+                <canvas id="contributions-chart"></canvas>
+            </div>
 
-    <section class="notes-panel">
-        <h2>How This Works</h2>
-        <p>This breakdown provides a simplified interpretation of the main clinical and retinal drivers that increase your hypertension risk.</p>
-        <ul>
-            <li><strong>Age, BMI, blood pressure, and glucose</strong> are strong clinical risk indicators.</li>
-            <li><strong>Smoking and diabetes</strong> add to long-term cardiovascular risk.</li>
-            <li>The retinal model probability highlights <strong>eye image changes</strong> linked with hypertension.</li>
-        </ul>
-    </section>
+            <div class="factors-list" id="factors-list">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Modifiable vs Non-Modifiable -->
+        <section class="section-card">
+            <h2>What You Can Change</h2>
+            <p class="section-description">Focus your efforts on modifiable factors for maximum impact</p>
+            
+            <div class="factor-categories">
+                <div class="category modifiable">
+                    <h3>✅ Modifiable Factors</h3>
+                    <p class="category-subtitle">You have control over these</p>
+                    <div id="modifiable-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="category non-modifiable">
+                    <h3>🧬 Non-Modifiable Factors</h3>
+                    <p class="category-subtitle">Genetic or age-related</p>
+                    <div id="non-modifiable-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Plan -->
+        <section class="section-card action-plan">
+            <h2>🎯 Your Personalized Action Plan</h2>
+            <p class="section-description">Top 3 priority actions to reduce your risk</p>
+            
+            <div class="recommendations" id="recommendations">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div class="potential-reduction">
+                <h3>Potential Risk Reduction</h3>
+                <p id="reduction-text">By addressing these factors, you could reduce your risk by <strong id="reduction-amount">--</strong> over <strong id="reduction-timeframe">--</strong>.</p>
+            </div>
+        </section>
+
+        <!-- Healthy Ranges Comparison -->
+        <section class="section-card">
+            <h2>Your Values vs. Healthy Ranges</h2>
+            <p class="section-description">See how your measurements compare</p>
+            
+            <div class="ranges-comparison" id="ranges-comparison">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Model Breakdown -->
+        <section class="section-card">
+            <h2>How We Calculate Your Risk</h2>
+            <p class="section-description">Understanding the multimodal approach</p>
+            
+            <div class="model-breakdown">
+                <div class="model-component">
+                    <div class="model-icon">📊</div>
+                    <h3>Clinical Model</h3>
+                    <p class="model-score" id="clinical-score">--</p>
+                    <p class="model-desc">Analyzes your health indicators, blood pressure, glucose, BMI, age, and risk factors</p>
+                </div>
+                
+                <div class="model-component">
+                    <div class="model-icon">👁️</div>
+                    <h3>Retinal Model</h3>
+                    <p class="model-score" id="retinal-score">--</p>
+                    <p class="model-desc">Deep learning analysis of retinal blood vessels using fundus imagery</p>
+                </div>
+                
+                <div class="model-component highlight">
+                    <div class="model-icon">🎯</div>
+                    <h3>Fused Model</h3>
+                    <p class="model-score" id="fusion-score">--</p>
+                    <p class="model-desc">Combines both models using weighted late fusion for final risk estimate</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Disclaimer -->
+        <section class="disclaimer">
+            <h3>⚕️ Medical Disclaimer</h3>
+            <p>This analysis is for educational purposes only and should not replace professional medical advice. Please consult with your healthcare provider to discuss these findings and develop an appropriate treatment plan.</p>
+        </section>
+
+    </main>
+
 </div>
 
 </body>

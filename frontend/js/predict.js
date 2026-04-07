@@ -281,8 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         resultsCard.innerHTML = resultsHTML;
         
-        // Save breakdown data in session storage for the breakdown page
-        sessionStorage.setItem('hypertensionRiskBreakdown', JSON.stringify(result));
+        // Save prediction data in session storage for the breakdown page
+        sessionStorage.setItem('hypertensionPrediction', JSON.stringify(result));
 
         // Add visual feedback
         resultsCard.style.border = `2px solid ${getRiskColor(result.risk_category)}`;

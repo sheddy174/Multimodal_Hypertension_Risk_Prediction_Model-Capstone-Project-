@@ -14,6 +14,7 @@ import os
 from services.clinical_predict import clinical_predict
 from services.retinal_predict import retinal_predict
 from services.fusion_predict import fusion_predict
+from services.risk_breakdown import calculate_risk_breakdown
 
 app = FastAPI(title="Hypertension Multimodal AI API")
 
@@ -32,11 +33,10 @@ class ClinicalData(BaseModel):
     BPMeds: int = Field(0)
 
 class BreakdownRequest(BaseModel):
-    clinical_data: ClinicalData
+    clinical_data: dict
     clinical_probability: float
     retinal_probability: float
     fusion_probability: float
-    risk_level: str
 
 
 def clamp_value(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
@@ -115,23 +115,18 @@ def build_risk_breakdown(clinical_data: ClinicalData, retinal_probability: float
 @app.post("/breakdown")
 def breakdown(payload: BreakdownRequest):
     try:
-        contributions = build_risk_breakdown(
+        breakdown_result = calculate_risk_breakdown(
             payload.clinical_data,
+            payload.clinical_probability,
             payload.retinal_probability,
             payload.fusion_probability
         )
-
-        summary = {
-            "risk_category": payload.risk_level,
-            "clinical_probability": float(payload.clinical_probability),
-            "retinal_probability": float(payload.retinal_probability),
-            "fusion_probability": float(payload.fusion_probability)
-        }
-
-        return {"summary": summary, "contributions": contributions}
+        return breakdown_result
 
     except Exception as e:
         print("Error generating breakdown:", e)
+        import traceback
+        traceback.print_exc()
         return JSONResponse(
             status_code=500,
             content={

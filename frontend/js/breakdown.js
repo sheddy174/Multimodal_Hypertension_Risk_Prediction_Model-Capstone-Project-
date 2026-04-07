@@ -1,197 +1,241 @@
+let breakdownCharts = {};
+let predictionData = null;
+let breakdownData = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const rawData = sessionStorage.getItem('hypertensionRiskBreakdown');
-    const contributionList = document.getElementById('contribution-list');
-    const summaryContent = document.getElementById('summary-content');
+    const rawData = sessionStorage.getItem('hypertensionPrediction');
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
 
     if (!rawData) {
-        summaryContent.innerHTML = '<p>No prediction data found. Please run a prediction first.</p>';
+        loading.innerHTML = '<p style="color: #ff6b6b;">No prediction data found. Please run a prediction first.</p>';
         return;
     }
 
-    let data;
     try {
-        data = JSON.parse(rawData);
+        predictionData = JSON.parse(rawData);
     } catch (error) {
-        summaryContent.innerHTML = '<p>Unable to parse breakdown data. Please try again.</p>';
+        loading.innerHTML = '<p style="color: #ff6b6b;">Unable to parse prediction data. Please try again.</p>';
         return;
     }
 
     try {
-        const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/breakdown`, {
+        const apiBase = window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiBase}/breakdown`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                clinical_data: data.clinical_data,
-                clinical_probability: data.clinical_probability,
-                retinal_probability: data.retinal_probability,
-                fusion_probability: data.fusion_probability,
-                risk_level: data.risk_category
+                clinical_data: predictionData.clinical_data,
+                clinical_probability: predictionData.clinical_probability,
+                retinal_probability: predictionData.retinal_probability,
+                fusion_probability: predictionData.fusion_probability
             })
         });
 
-        const breakdownData = await response.json();
-
         if (!response.ok) {
-            throw new Error(breakdownData.error || 'Failed to load risk breakdown');
+            throw new Error(`API returned ${response.status}`);
         }
 
-        renderSummary(breakdownData.summary);
-        renderContributions(breakdownData.contributions);
+        breakdownData = await response.json();
+        loading.style.display = 'none';
+        content.style.display = 'block';
+        renderBreakdown(breakdownData);
 
     } catch (error) {
         console.error('Breakdown API error:', error);
-        summaryContent.innerHTML = `
-            <div class="summary-item">
-                <h3>Final Risk Category</h3>
-                <p>${data.risk_category}</p>
-            </div>
-            <div class="summary-item">
-                <h3>Predicted Fusion Risk</h3>
-                <p>${(data.fusion_probability * 100).toFixed(1)}%</p>
-            </div>
-            <div class="summary-item">
-                <h3>Retinal Model Score</h3>
-                <p>${(data.retinal_probability * 100).toFixed(1)}%</p>
-            </div>
-            <div class="summary-item">
-                <h3>Clinical Model Score</h3>
-                <p>${(data.clinical_probability * 100).toFixed(1)}%</p>
-            </div>
-        `;
-
-        const contributions = buildContributions(data);
-        const topContributors = contributions.sort((a, b) => b.score - a.score);
-        contributionList.innerHTML = topContributors.map(item => renderContributionCard(item)).join('');
+        loading.innerHTML = `<p style="color: #ff6b6b;">Error loading breakdown: ${error.message}</p>`;
     }
+
+    // PDF Export Handler
+    document.getElementById('export-pdf')?.addEventListener('click', exportToPDF);
 });
 
-function renderSummary(summary) {
-    const summaryContent = document.getElementById('summary-content');
-    summaryContent.innerHTML = `
-        <div class="summary-item">
-            <h3>Final Risk Category</h3>
-            <p>${summary.risk_category}</p>
-        </div>
-        <div class="summary-item">
-            <h3>Predicted Fusion Risk</h3>
-            <p>${(summary.fusion_probability * 100).toFixed(1)}%</p>
-        </div>
-        <div class="summary-item">
-            <h3>Retinal Model Score</h3>
-            <p>${(summary.retinal_probability * 100).toFixed(1)}%</p>
-        </div>
-        <div class="summary-item">
-            <h3>Clinical Model Score</h3>
-            <p>${(summary.clinical_probability * 100).toFixed(1)}%</p>
-        </div>
-    `;
+function renderBreakdown(data) {
+    // 1. Risk Overview
+    document.getElementById('risk-category').textContent = data.risk_category;
+    document.getElementById('risk-percentage').textContent = (data.overall_risk * 100).toFixed(1) + '%';
+    
+    // Risk gauge chart
+    renderRiskGauge(data.overall_risk, data.risk_category);
+    
+    // 2. Factor Contributions
+    renderFactorsList(data.factor_contributions);
+    renderContributionsChart(data.factor_contributions);
+    
+    // 3. Modifiable vs Non-Modifiable
+    renderModifiableFactors(data.modifiable_factors);
+    renderNonModifiableFactors(data.non_modifiable_factors);
+    
+    // 4. Recommendations
+    renderRecommendations(data.top_recommendations);
+    
+    // 5. Potential Reduction
+    const reduction = data.potential_risk_reduction;
+    document.getElementById('reduction-amount').textContent = reduction.total + '%';
+    document.getElementById('reduction-timeframe').textContent = reduction.timeframe;
+    
+    // 6. Ranges Comparison
+    renderRangesComparison(predictionData.clinical_data);
+    
+    // 7. Model Scores
+    document.getElementById('clinical-score').textContent = (data.model_breakdown.clinical * 100).toFixed(1) + '%';
+    document.getElementById('retinal-score').textContent = (data.model_breakdown.retinal * 100).toFixed(1) + '%';
+    document.getElementById('fusion-score').textContent = (data.model_breakdown.fusion * 100).toFixed(1) + '%';
 }
 
-function renderContributions(contributions) {
-    const contributionList = document.getElementById('contribution-list');
-    contributionList.innerHTML = contributions
-        .sort((a, b) => b.score - a.score)
-        .map(item => renderContributionCard(item))
-        .join('');
-}
-
-function buildContributions(data) {
-    const d = data.clinical_data;
-    const age = Number(d.age || 0);
-    const bmi = Number(d.bmi || 22);
-    const systolic = Number(d.systolic_bp || 120);
-    const diastolic = Number(d.diastolic_bp || 80);
-    const glucose = Number(d.glucose || 100);
-    const cholesterol = Number(d.totChol || 200);
-    const smoking = Number(d.currentSmoker || 0);
-    const diabetes = Number(d.diabetes || 0);
-    const bpMeds = Number(d.BPMeds || 0);
-    const heartRate = Number(d.heartRate || 75);
-
-    return [
-        {
-            title: 'Systolic Blood Pressure',
-            score: normalize((systolic - 110) / 80),
-            detail: `Higher systolic pressure is a strong hypertension driver. Current reading: ${systolic} mmHg.`
-        },
-        {
-            title: 'Diastolic Blood Pressure',
-            score: normalize((diastolic - 70) / 80),
-            detail: `Diastolic pressure influences long-term vascular risk. Current reading: ${diastolic} mmHg.`
-        },
-        {
-            title: 'Age',
-            score: normalize((age - 35) / 45),
-            detail: `Hypertension risk generally increases with age. Current age: ${age}.`
-        },
-        {
-            title: 'BMI',
-            score: normalize((bmi - 22) / 18),
-            detail: `Higher BMI is associated with greater cardiovascular strain. Current BMI: ${bmi}.`
-        },
-        {
-            title: 'Glucose',
-            score: normalize((glucose - 90) / 120),
-            detail: `Elevated glucose can contribute to metabolic risk. Current level: ${glucose} mg/dL.`
-        },
-        {
-            title: 'Cholesterol',
-            score: normalize((cholesterol - 180) / 120),
-            detail: `High cholesterol can worsen vascular health. Current level: ${cholesterol} mg/dL.`
-        },
-        {
-            title: 'Smoking Status',
-            score: smoking === 1 ? 1 : 0.05,
-            detail: `${smoking === 1 ? 'Smoking increases cardiovascular strain.' : 'Non-smoker status lowers risk.'}`
-        },
-        {
-            title: 'Diabetes',
-            score: diabetes === 1 ? 1 : 0.05,
-            detail: `${diabetes === 1 ? 'Diabetes raises hypertension risk.' : 'No diabetes lowers risk.'}`
-        },
-        {
-            title: 'Blood Pressure Medication',
-            score: bpMeds === 1 ? 0.95 : 0.25,
-            detail: `${bpMeds === 1 ? 'Medication indicates existing hypertension treatment.' : 'No BP medications suggests lower treatment dependency.'}`
-        },
-        {
-            title: 'Heart Rate',
-            score: normalize((heartRate - 60) / 60),
-            detail: `Higher resting heart rate is often linked with elevated risk. Current rate: ${heartRate} bpm.`
-        },
-        {
-            title: 'Retinal Model Contribution',
-            score: clamp(data.retinal_probability),
-            detail: 'The fundus image model indicates how strongly retinal changes support hypertension risk.'
-        },
-        {
-            title: 'Fusion Impact',
-            score: clamp(data.fusion_probability),
-            detail: 'The final prediction combines both clinical and retinal evidence.'
+function renderRiskGauge(risk, category) {
+    const ctx = document.getElementById('risk-gauge-chart')?.getContext('2d');
+    if (!ctx) return;
+    
+    const gaugeData = {
+        labels: ['Your Risk', 'Remaining'],
+        datasets: [{
+            data: [risk * 100, (1 - risk) * 100],
+            backgroundColor: [
+                risk > 0.6 ? '#ff6b6b' : risk > 0.3 ? '#ffb84d' : '#00d9a3',
+                '#f0f0f0'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    if (breakdownCharts.gauge) breakdownCharts.gauge.destroy();
+    breakdownCharts.gauge = new Chart(ctx, {
+        type: 'doughnut',
+        data: gaugeData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false }
+            }
         }
-    ];
+    });
 }
 
-function renderContributionCard(item) {
-    const score = Math.round(item.score * 100);
-    return `
-        <div class="contribution-card">
-            <strong>${item.title}</strong>
-            <span class="score-pill">${score}%</span>
-            <div class="bar-track">
-                <div class="bar-fill" style="width: ${score}%;"></div>
+function renderContributionsChart(factors) {
+    const ctx = document.getElementById('contributions-chart')?.getContext('2d');
+    if (!ctx) return;
+    
+    const sortedFactors = Object.entries(factors)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
+    
+    if (breakdownCharts.contributions) breakdownCharts.contributions.destroy();
+    breakdownCharts.contributions = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedFactors.map(f => f[0].replace(/_/g, ' ').toUpperCase()),
+            datasets: [{
+                label: 'Contribution %',
+                data: sortedFactors.map(f => f[1]),
+                backgroundColor: '#088395',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+}
+
+function renderFactorsList(factors) {
+    const list = document.getElementById('factors-list');
+    const items = Object.entries(factors).sort((a, b) => b[1] - a[1]);
+    
+    list.innerHTML = items.map(([name, contribution]) => `
+        <div class="factor-item">
+            <div class="factor-info">
+                <div class="factor-name">${name.replace(/_/g, ' ')}</div>
+                <div class="factor-value">Contributing to overall risk</div>
             </div>
-            <p>${item.detail}</p>
+            <div class="factor-contribution">${contribution.toFixed(1)}%</div>
         </div>
-    `;
+    `).join('');
 }
 
-function normalize(value) {
-    return clamp(value, 0, 1);
+function renderModifiableFactors(factors) {
+    const list = document.getElementById('modifiable-list');
+    list.innerHTML = factors.map(f => `
+        <div class="factor-tag">
+            <strong>${f.name}</strong><br>
+            <small>Current: ${f.info.current} | Healthy: ${f.info.healthy}</small>
+        </div>
+    `).join('');
 }
 
-function clamp(value, min = 0, max = 1) {
-    return Math.min(Math.max(value, min), max);
+function renderNonModifiableFactors(factors) {
+    const list = document.getElementById('non-modifiable-list');
+    list.innerHTML = factors.map(f => `
+        <div class="factor-tag">
+            <strong>${f.name}</strong><br>
+            <small>${f.info.current}</small>
+        </div>
+    `).join('');
+}
+
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('recommendations');
+    container.innerHTML = recommendations.map((rec, idx) => `
+        <div class="recommendation-card">
+            <div class="recommendation-header">
+                <div class="recommendation-title">Priority ${idx + 1}: ${rec.factor}</div>
+                <span class="impact-badge impact-${rec.impact.toLowerCase()}">${rec.impact} Impact</span>
+            </div>
+            <div class="recommendation-actions">
+                <ul>
+                    ${rec.actions.map(action => `<li>${action}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="expected-reduction">💡 Potential reduction: ${rec.expected_reduction}%</div>
+        </div>
+    `).join('');
+}
+
+function renderRangesComparison(clinicalData) {
+    const container = document.getElementById('ranges-comparison');
+    const ranges = [
+        { label: 'Systolic BP', value: clinicalData.systolic_bp, min: 90, max: 180, unit: 'mmHg', healthy: 120 },
+        { label: 'Diastolic BP', value: clinicalData.diastolic_bp, min: 60, max: 120, unit: 'mmHg', healthy: 80 },
+        { label: 'Glucose', value: clinicalData.glucose, min: 70, max: 300, unit: 'mg/dL', healthy: 100 },
+        { label: 'BMI', value: clinicalData.bmi, min: 15, max: 40, unit: '', healthy: 22 },
+        { label: 'Cholesterol', value: clinicalData.totChol, min: 100, max: 400, unit: 'mg/dL', healthy: 200 },
+        { label: 'Heart Rate', value: clinicalData.heartRate, min: 40, max: 120, unit: 'bpm', healthy: 70 }
+    ];
+    
+    container.innerHTML = ranges.map(r => {
+        const percentage = ((r.value - r.min) / (r.max - r.min)) * 100;
+        const status = r.value > r.healthy ? '⚠️' : '✓';
+        return `
+            <div class="range-item">
+                <div class="range-label">${r.label}</div>
+                <div class="range-bar">
+                    <div class="range-fill" style="width: ${Math.min(100, Math.max(0, percentage))}%;"></div>
+                </div>
+                <div class="range-status">${status}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function exportToPDF() {
+    if (!window.jspdf) {
+        alert('PDF library not loaded');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    pdf.text('HyperRNet - Hypertension Risk Analysis Report', 20, 20);
+    pdf.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+    pdf.text(`Risk Level: ${breakdownData.risk_category}`, 20, 40);
+    pdf.text(`Overall Risk: ${(breakdownData.overall_risk * 100).toFixed(1)}%`, 20, 50);
+    pdf.save('hypertension_risk_report.pdf');
 }
